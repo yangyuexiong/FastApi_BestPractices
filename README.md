@@ -1,0 +1,2 @@
+# FastApi_BestPractices
+FastApi_BestPractices
