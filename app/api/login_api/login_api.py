@@ -14,11 +14,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
-# from config.config import get_settings
 from common.libs.custom_exception import CustomException
-
+from common.libs.api_result import api_result
 from app.models.user.models import Admin
-
 import utils.redis_connect as rp
 from utils.redis_connect import get_value, set_key_value
 
@@ -114,7 +112,6 @@ async def login(data: LoginReqBody):
 
     await set_key_value("ok2024_123", "hhh")
 
-
     print(data.username)
     print(data.password)
     print(data)
@@ -127,7 +124,8 @@ async def login(data: LoginReqBody):
         "X-Cat-Dog": "alone in the world",
         "Content-Language": "en-US"
     }
-    response = JSONResponse(status_code=200, content=jsonable_encoder(data), headers=headers)
+    content = api_result(code=status.HTTP_200_OK, message="登录成功", data=jsonable_encoder(data))
+    response = JSONResponse(status_code=status.HTTP_200_OK, content=content, headers=headers)
     response.set_cookie(key="fakesession", value="fake-cookie-session-value")
     return response
 
