@@ -15,6 +15,8 @@ aerich = "*"
 alembic = "*"
 aioredis = "*"
 python-multipart = "*"
+bcrypt = "*"
+passlib = "*"
 
 [dev-packages]
 
