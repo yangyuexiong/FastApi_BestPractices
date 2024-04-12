@@ -24,7 +24,8 @@ db_url = "mysql://{}:{}@{}:{}/{}".format(
 
 models_list = [
     "aerich.models",
-    "app.models.user.models"
+    "app.models.user.models",
+    "app.models.admin.models"
 ]
 
 TORTOISE_CONFIG = {

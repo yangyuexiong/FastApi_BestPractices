@@ -5,7 +5,7 @@
 # @File    : login_api.py
 # @Software: PyCharm
 
-
+from datetime import datetime
 from typing import Union, List, Annotated
 
 from fastapi import APIRouter, Depends, Header, Query, Cookie, status, HTTPException
@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from common.libs.custom_exception import CustomException
 from common.libs.api_result import api_result
-from app.models.user.models import Admin
+from app.models.admin.models import Admin, Admin_Pydantic
 import utils.redis_connect as rp
 from utils.redis_connect import get_value, set_key_value
 
@@ -79,6 +79,41 @@ async def verify_key(x_key: str = Header()):
     dependencies=[Depends(verify_token), Depends(verify_key)]
 
 """
+
+
+class AdminCreate(BaseModel):
+    username: str
+    password: str
+
+
+class AdminResponse(BaseModel):
+    id: int
+    username: str
+    remark: Union[str, None] = None
+    create_time: datetime
+
+
+# @login_router.post("/create", response_model=Admin_Pydantic)
+@login_router.post("/create", response_model=AdminResponse)
+async def login_test(admin_data: AdminCreate):
+    # 直接创建
+    # admin_obj = await Admin.create(
+    #     username=admin_data.username,
+    #     password=admin_data
+    # )
+
+    # 创建 Admin 对象
+    admin_obj = Admin(username=admin_data.username)
+
+    # 使用 set_password 方法对密码进行加密
+    await admin_obj.set_password(admin_data.password)
+
+    # 保存到数据库
+    await admin_obj.save()
+
+    # 返回创建的 admin 对象
+    print(admin_obj)
+    return admin_obj
 
 
 @login_router.post(
@@ -145,21 +180,17 @@ async def user_list(commons: CommonQueryParams = Depends()):
     return commons
 
 
-@user_router.get("/{user_id}")
+@user_router.get("/{user_id}", response_model=Admin_Pydantic)
 async def user(user_id: int):
     """用户详情"""
 
-    # data = {
-    #     "id": user_id,
-    #     "username": "yyx",
-    #     "password": "123456"
-    # }
-    #
-    # return data
     user = await Admin.get(id=user_id)
-    print(user)
+    print(user, type(user))
+    user2 = await Admin_Pydantic.from_queryset_single(Admin.get(id=user_id))
+    print(user2, type(user2))
+
     if user:
-        return user
+        return user2
     return {}
 
 
