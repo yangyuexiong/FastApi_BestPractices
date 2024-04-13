@@ -15,7 +15,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class Admin(BaseModel):
-    username = fields.CharField(max_length=20, unique=True, description='用户名')
+    username = fields.CharField(max_length=255, unique=True, description='用户名')
     password = fields.CharField(max_length=255, description='密码')
     creator = fields.CharField(max_length=32, null=True, description="创建人")
     creator_id = fields.BigIntField(null=True, description="创建人id")
@@ -29,6 +29,8 @@ class Admin(BaseModel):
 
     # 验证密码
     async def verify_password(self, raw_password):
+        # print(f"raw_password:{raw_password}")
+        # print(f"password:{self.password}")
         return pwd_context.verify(raw_password, self.password)
 
     class Meta:
