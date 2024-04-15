@@ -35,7 +35,7 @@ def custom_http_dict(custom_code):
 
 
 def api_result(code: int = None, message: str = None, data: any = None, details: str = None,
-               status: int = None) -> dict:
+               status: int = None, is_pop: bool = True) -> dict:
     """
     返回格式
     :param code:
@@ -43,6 +43,7 @@ def api_result(code: int = None, message: str = None, data: any = None, details:
     :param data:
     :param details:
     :param status:
+    :param is_pop:
     :return:
     """
 
@@ -55,7 +56,7 @@ def api_result(code: int = None, message: str = None, data: any = None, details:
         "data": data,
     }
 
-    if not result.get('data'):
+    if not result.get('data') and is_pop:
         result.pop('data')
 
     return result

@@ -8,12 +8,11 @@
 
 from all_reference import *
 
-from app.models.admin.models import Admin, Admin_Pydantic, pwd_context
+from app.models.admin.models import Admin, Admin_Pydantic
+from utils.password_context import pwd_context
 
 admin_router = APIRouter()
 
-
-# TODO 时区
 
 class AdminCreate(BaseModel):
     username: str
@@ -32,6 +31,11 @@ class AdminUpdate(BaseModel):
 
 class AdminDelete(BaseModel):
     id: int
+
+
+class AdminPage(CommonPage):
+    username: str = "admin"
+    creator_id: int = 0
 
 
 class AdminLogin(BaseModel):
@@ -134,23 +138,27 @@ async def admin_login(request_data: AdminLogin):
         content = api_result(code=status.HTTP_200_OK, message="登录成功", data=jsonable_encoder(admin_result))
         return JSONResponse(status_code=status.HTTP_200_OK, content=content)
 
-# @admin_router.post("/", response_model=AdminResponse)
-# async def login_test(admin_data: AdminCreate):
-#     # 直接创建
-#     # admin_obj = await Admin.create(
-#     #     username=admin_data.username,
-#     #     password=admin_data
-#     # )
-#
-#     # 创建 Admin 对象
-#     admin_obj = Admin(username=admin_data.username)
-#
-#     # 使用 set_password 方法对密码进行加密
-#     await admin_obj.set_password(admin_data.password)
-#
-#     # 保存到数据库
-#     await admin_obj.save()
-#
-#     # 返回创建的 admin 对象
-#     print(admin_obj)
-#     return admin_obj
+
+@admin_router.post("/admin_page")
+async def admin_page(request_data: AdminPage):
+    """admin列表"""
+
+    q = {
+        # "username": request_data.username
+        "username__icontains": request_data.username
+    }
+    if request_data.creator_id:
+        q["creator_id"] = request_data.creator_id
+
+    print(q)
+
+    page = request_data.page
+    size = request_data.size
+    page, size = await page_size(page, size)
+
+    admins = await Admin.filter(**q).offset(page).limit(size)
+    print(admins)
+
+    admins_pydantic = [await Admin_Pydantic.from_tortoise_orm(admin) for admin in admins]
+    content = api_result(code=status.HTTP_200_OK, data=jsonable_encoder(admins_pydantic), is_pop=False)
+    return JSONResponse(status_code=status.HTTP_200_OK, content=content)

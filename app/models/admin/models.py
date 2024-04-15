@@ -5,13 +5,11 @@
 # @File    : models.py
 # @Software: PyCharm
 
-from tortoise import fields, models
+from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator
-from passlib.context import CryptContext
 
 from common.libs.base_model import BaseModel
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from utils.password_context import pwd_context
 
 
 class Admin(BaseModel):

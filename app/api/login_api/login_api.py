@@ -5,7 +5,6 @@
 # @File    : login_api.py
 # @Software: PyCharm
 
-from datetime import datetime
 from typing import Union, List, Annotated
 
 from fastapi import APIRouter, Depends, Header, Query, Cookie, status, HTTPException
@@ -21,8 +20,6 @@ import utils.redis_connect as rp
 from utils.redis_connect import get_value, set_key_value
 
 login_router = APIRouter()
-user_router = APIRouter()
-item_router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -81,41 +78,6 @@ async def verify_key(x_key: str = Header()):
 """
 
 
-class AdminCreate(BaseModel):
-    username: str
-    password: str
-
-
-class AdminResponse(BaseModel):
-    id: int
-    username: str
-    remark: Union[str, None] = None
-    create_time: datetime
-
-
-# @login_router.post("/create", response_model=Admin_Pydantic)
-@login_router.post("/create", response_model=AdminResponse)
-async def login_test(admin_data: AdminCreate):
-    # 直接创建
-    # admin_obj = await Admin.create(
-    #     username=admin_data.username,
-    #     password=admin_data
-    # )
-
-    # 创建 Admin 对象
-    admin_obj = Admin(username=admin_data.username)
-
-    # 使用 set_password 方法对密码进行加密
-    await admin_obj.set_password(admin_data.password)
-
-    # 保存到数据库
-    await admin_obj.save()
-
-    # 返回创建的 admin 对象
-    print(admin_obj)
-    return admin_obj
-
-
 @login_router.post(
     "/",
     response_model=LoginOut,
@@ -163,52 +125,3 @@ async def login(data: LoginReqBody):
     response = JSONResponse(status_code=status.HTTP_200_OK, content=content, headers=headers)
     response.set_cookie(key="fakesession", value="fake-cookie-session-value")
     return response
-
-
-class CommonQueryParams:
-    def __init__(self, q: Union[str, None] = None, skip: int = 0, limit: int = 100):
-        self.q = q
-        self.skip = skip
-        self.limit = limit
-
-
-@user_router.get("/user_list/")
-async def user_list(commons: CommonQueryParams = Depends()):
-    """用户列表"""
-
-    # print(get_settings().app_name)
-    return commons
-
-
-@user_router.get("/{user_id}", response_model=Admin_Pydantic)
-async def user(user_id: int):
-    """用户详情"""
-
-    user = await Admin.get(id=user_id)
-    print(user, type(user))
-    user2 = await Admin_Pydantic.from_queryset_single(Admin.get(id=user_id))
-    print(user2, type(user2))
-
-    if user:
-        return user2
-    return {}
-
-
-def validate_query_param(q: Union[str, None] = Query(default=None, max_length=2)):
-    try:
-        if len(q) > 2:
-            raise ValueError("String should have at most 2 characters")
-        return q
-    except ValueError as ve:
-        # 在验证失败时抛出自定义的HTTPException
-        raise HTTPException(status_code=422, detail={"error": "Custom validation error", "message": str(ve)})
-
-
-@item_router.get("/")
-async def read_items(q: Annotated[Union[str, None], Cookie()]):
-    # async def read_items(q: Union[str, None] = Query(default=None, max_length=2)):
-    """数据列表"""
-
-    query_items = {"q": q}
-    # raise HTTPException(status_code=404, detail="Resource not found")
-    return query_items
