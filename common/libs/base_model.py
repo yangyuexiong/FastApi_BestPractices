@@ -12,7 +12,7 @@ import pytz
 from tortoise import fields, models
 
 
-class BaseModel(models.Model):
+class CustomBaseModel(models.Model):
     """
     id:id
     create_timestamp:创建时间戳

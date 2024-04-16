@@ -8,11 +8,11 @@
 from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator
 
-from common.libs.base_model import BaseModel
+from common.libs.base_model import CustomBaseModel
 from utils.password_context import pwd_context
 
 
-class Admin(BaseModel):
+class Admin(CustomBaseModel):
     username = fields.CharField(max_length=255, unique=True, description='用户名')
     password = fields.CharField(max_length=255, description='密码')
     creator = fields.CharField(max_length=32, null=True, description="创建人")

@@ -8,7 +8,7 @@
 
 from tortoise import fields, models
 
-from common.libs.base_model import BaseModel
+from common.libs.base_model import CustomBaseModel
 
 
 class Users(models.Model):
