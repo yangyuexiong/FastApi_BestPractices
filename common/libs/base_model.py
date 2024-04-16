@@ -10,6 +10,7 @@ from datetime import datetime
 
 import pytz
 from tortoise import fields, models
+from tortoise.contrib.pydantic import pydantic_model_creator
 
 
 class CustomBaseModel(models.Model):
@@ -48,3 +49,19 @@ class CustomBaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+def create_custom_pydantic_model(model, name):
+    """自定义:pydantic_model_creator"""
+
+    # 使用 pydantic_model_creator 创建原始的 Pydantic 模型
+    original_pydantic_model = pydantic_model_creator(model, name=name)
+
+    # 定义自定义的 Pydantic 模型，继承自原始的 Pydantic 模型
+    class CustomPydanticModel(original_pydantic_model):
+        class Config:
+            json_encoders = {
+                datetime: lambda dt: dt.strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+    return CustomPydanticModel

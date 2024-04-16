@@ -6,41 +6,28 @@
 # @Software: PyCharm
 
 
-from tortoise import fields, models
+from tortoise import fields
+from tortoise.contrib.pydantic import pydantic_model_creator
 
 from common.libs.base_model import CustomBaseModel
 
 
-class Users(models.Model):
-    """
-    The User model
-    """
+class User(CustomBaseModel):
+    """用户"""
 
-    id = fields.IntField(pk=True)
-    username = fields.CharField(max_length=20, unique=True)
-    username2 = fields.CharField(max_length=20, unique=True)
-    username3 = fields.CharField(max_length=20, unique=True)
-    name = fields.CharField(max_length=50, null=True)
-    family_name = fields.CharField(max_length=50, null=True)
-    category = fields.CharField(max_length=30, default="misc")
-    password_hash = fields.CharField(max_length=128, null=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
-    modified_at = fields.DatetimeField(auto_now=True)
-
-    def full_name(self) -> str:
-        """
-        Returns the best name
-        """
-        if self.name or self.family_name:
-            return f"{self.name or ''} {self.family_name or ''}".strip()
-        return self.username
-
-    class PydanticMeta:
-        computed = ["full_name"]
-        exclude = ["password_hash"]
+    username = fields.CharField(max_length=255, unique=True, description='用户名')
+    password = fields.CharField(max_length=255, description='密码')
+    creator = fields.CharField(max_length=32, null=True, description="创建人")
+    creator_id = fields.BigIntField(null=True, description="创建人id")
+    modifier = fields.CharField(max_length=32, null=True, description='更新人')
+    modifier_id = fields.BigIntField(null=True, description='更新人id')
+    remark = fields.CharField(max_length=255, null=True, description='备注')
 
     class Meta:
-        table = "users"
+        table = "user"
 
-# User_Pydantic = pydantic_model_creator(Users, name="User")
-# UserIn_Pydantic = pydantic_model_creator(Users, name="UserIn", exclude_readonly=True)
+    class PydanticMeta:
+        exclude = ["password"]
+
+
+User_Pydantic = pydantic_model_creator(User, name="User")

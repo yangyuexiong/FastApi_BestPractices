@@ -5,7 +5,6 @@
 # @File    : admin_api.py
 # @Software: PyCharm
 
-
 from all_reference import *
 
 from app.models.admin.models import Admin, Admin_Pydantic
@@ -15,8 +14,8 @@ admin_router = APIRouter()
 
 
 class AdminCreate(BaseModel):
-    username: str
-    password: str
+    username: str = "yyx"
+    password: str = "123456"
     remark: str
 
 
@@ -39,8 +38,18 @@ class AdminPage(CommonPage):
 
 
 class AdminLogin(BaseModel):
-    username: str
-    password: str
+    username: str = "admin"
+    password: str = "123456"
+
+
+class AdminOut(BaseModel):
+    create_time: datetime
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda dt: dt.strftime("%Y-%m-%d %H:%M:%S")
+        }
+    )
 
 
 @admin_router.get("/{admin_id}")
@@ -54,13 +63,12 @@ async def admin_pofile(admin_id: int):
         return JSONResponse(status_code=status.HTTP_200_OK, content=content)
     else:
         admin_pydantic = await Admin_Pydantic.from_tortoise_orm(admin)
-        admin_dict = admin_pydantic.dict(exclude={'password'})
-        content = api_result(code=status.HTTP_200_OK, data=jsonable_encoder(admin_dict))
+        content = api_result(code=status.HTTP_200_OK, data=jsonable_encoder(admin_pydantic))
 
     return JSONResponse(status_code=status.HTTP_200_OK, content=content)
 
 
-@admin_router.post("/", response_model=Admin_Pydantic)
+@admin_router.post("/")
 async def create_admin(request_data: AdminCreate):
     """新增admin账号"""
 
@@ -82,7 +90,7 @@ async def create_admin(request_data: AdminCreate):
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=content)
 
 
-@admin_router.put("/", response_model=Admin_Pydantic)
+@admin_router.put("/")
 async def update_admin(request_data: AdminUpdate):
     """更新admin信息"""
 
@@ -116,7 +124,7 @@ async def delete_admin(request_data: AdminDelete):
         return JSONResponse(status_code=status.HTTP_200_OK, content=content)
 
 
-@admin_router.post("/login", response_model=Admin_Pydantic)
+@admin_router.post("/login")
 async def admin_login(request_data: AdminLogin):
     """新增admin账号"""
 

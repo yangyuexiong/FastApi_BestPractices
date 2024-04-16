@@ -6,13 +6,14 @@
 # @Software: PyCharm
 
 from tortoise import fields
-from tortoise.contrib.pydantic import pydantic_model_creator
 
-from common.libs.base_model import CustomBaseModel
+from common.libs.base_model import CustomBaseModel, create_custom_pydantic_model
 from utils.password_context import pwd_context
 
 
 class Admin(CustomBaseModel):
+    """后台用户"""
+
     username = fields.CharField(max_length=255, unique=True, description='用户名')
     password = fields.CharField(max_length=255, description='密码')
     creator = fields.CharField(max_length=32, null=True, description="创建人")
@@ -38,4 +39,18 @@ class Admin(CustomBaseModel):
         exclude = ["password"]
 
 
+"""
 Admin_Pydantic = pydantic_model_creator(Admin, name="Admin")
+
+from datetime import datetime
+
+class Admin_Pydantic_Custom(Admin_Pydantic):
+    class Config:
+        json_encoders = {
+            datetime: lambda dt: dt.strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+上述代码等价于:  Admin_Pydantic = create_custom_pydantic_model(Admin, name="Admin")
+"""
+
+Admin_Pydantic = create_custom_pydantic_model(Admin, name="Admin")
