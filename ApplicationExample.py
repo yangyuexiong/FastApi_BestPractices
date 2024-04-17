@@ -13,16 +13,14 @@ import threading
 
 import shortuuid
 from loguru import logger
-from fastapi import FastAPI, APIRouter, Request, Depends, status
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Header, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from tortoise import Tortoise
 
 from app.api import api
 from config.config import get_config
-from common.libs.api_result import api_result
 from utils.print_logs import print_logs, json_format
 from utils.db_connect import db_init
 from utils.redis_connect import create_redis_connection_pool, close_redis_connection_pool
@@ -30,46 +28,6 @@ from utils.redis_connect import create_redis_connection_pool, close_redis_connec
 from common.libs.custom_exception import CustomException
 
 project_config = get_config()
-
-
-# 调试
-async def get_query_token(token: str):
-    if token != "jessica":
-        raise HTTPException(status_code=400, detail="No Jessica token provided")
-
-
-# 调试
-async def get_token_header(x_token: str = Header(), token: str = Header(), a_123: str = Header()):
-    print(f"x_token:{x_token}")
-    print(f"token:{token}")
-    print(f"a_123:{a_123}")
-    if x_token != "fake-super-secret-token":
-        # raise HTTPException(status_code=400, detail="X-Token header invalid")
-        raise CustomException(status_code=400, detail="Item not found", custom_code=1001, data=[123])
-
-
-router = APIRouter(
-    prefix="/items",
-    tags=["items"],
-    dependencies=[Depends(get_token_header)],
-    responses={404: {"description": "Not found 123"}},
-)
-fake_items_db = {"plumbus": {"name": "Plumbus"}, "gun": {"name": "Portal Gun"}}
-
-
-@router.get("/")
-async def read_items():
-    return {
-        "code": 200,
-        "message": "ok"
-    }
-
-
-@router.get("/{item_id}")
-async def read_item(item_id: str):
-    if item_id not in fake_items_db:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return {"name": fake_items_db[item_id]["name"], "item_id": item_id}
 
 
 class MyMiddleware(BaseHTTPMiddleware):
@@ -90,7 +48,7 @@ class MyMiddleware(BaseHTTPMiddleware):
 
         # token = request.headers.get('token')
         # if token != "":
-        #     return api_result(401)
+        #     raise
 
         return response
 
@@ -139,13 +97,22 @@ async def shutdown_event():
 def create_app():
     """app实例"""
 
+    kw = {
+        "debug": project_config.DEBUG
+    }
+
+    if not project_config.DEBUG:  # `debug`为`False`时关闭接口文档访问
+        kw["docs_url"] = None
+        kw["redoc_url"] = None
+
+    print(kw)
     app = FastAPI(
         title="FastApi_BestPractices",
         description="description",
         summary="I hope everything has best practices.",
         version="1.0.0",
         openapi_url="/api/v1/openapi.json",
-        debug=True
+        **kw
     )
 
     # 跨域
@@ -208,7 +175,6 @@ def create_app():
     # 注册自定义异常处理器
     @app.exception_handler(CustomException)
     async def custom_exception_handler(request, exc: CustomException):
-        # print("request", request.__dict__)
         content = {
             "code": exc.custom_code,
             "message": exc.detail,
@@ -217,23 +183,19 @@ def create_app():
         if not exc.data:
             del content["data"]
 
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=content
-        )
+        return JSONResponse(status_code=exc.status_code, content=content)
+
+    # 基础异常处理器,在`app.debug`为`False`时(生产环境)返回JSON, 为`True`时(开发环境)抛出堆栈信息
+    @app.exception_handler(Exception)
+    async def base_exception_handler(request: Request, exc: Exception):
+        content = {
+            "code": 500,
+            "message": "Internal server error",
+            "data": [str(exc)]
+        }
+        return JSONResponse(status_code=500, content=content)
 
     # 路由注册
-    app.include_router(router)
     app.include_router(api)
 
     return app
-
-
-app = create_app()  # 用于执行以下代码调试使用，非用于其他文件导入使用。
-
-if __name__ == '__main__':
-    import uvicorn
-
-    # uvicorn.run(app, host="0.0.0.0", port=9999)
-
-    uvicorn.run("ApplicationExample:app", host="0.0.0.0", port=9999, reload=True)

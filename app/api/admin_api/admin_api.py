@@ -16,30 +16,35 @@ admin_router = APIRouter()
 class AdminCreate(BaseModel):
     username: str = "yyx"
     password: str = "123456"
-    remark: str
+    nickname: str = "昵称-xxx"
+    phone: str = "15011111111"
+    mail: str = "yang6333yyx@126.com"
+    code: str = "00001"
+    seat: str = "A666"
+    remark: str = "新增备注"
 
 
 class AdminUpdateData(BaseModel):
-    remark: str
+    nickname: str = "昵称-xxx"
+    phone: str = "15012345678"
+    mail: str = "yang6333yyx@126.com"
+    code: str = "00001"
+    seat: str = "A333"
+    remark: str = "编辑备注"
 
 
 class AdminUpdate(BaseModel):
-    id: int
+    id: int = 1
     admin_data: AdminUpdateData
 
 
 class AdminDelete(BaseModel):
-    id: int
+    id: int = 1
 
 
 class AdminPage(CommonPage):
     username: str = "admin"
     creator_id: int = 0
-
-
-class AdminLogin(BaseModel):
-    username: str = "admin"
-    password: str = "123456"
 
 
 class AdminOut(BaseModel):
@@ -121,29 +126,6 @@ async def delete_admin(request_data: AdminDelete):
     else:
         await admin.update_from_dict({"is_deleted": admin_id}).save()
         content = api_result(code=status.HTTP_200_OK)
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
-
-
-@admin_router.post("/login")
-async def admin_login(request_data: AdminLogin):
-    """新增admin账号"""
-
-    username = request_data.username
-    password = request_data.password
-
-    admin = await Admin.filter(username=username).first()
-
-    if not admin:
-        content = api_result(code=10002, message=f"管理员用户 {username} 不存在")
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
-
-    verify_result = await admin.verify_password(password)
-    if not verify_result:
-        content = api_result(code=10005, message="密码错误")
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
-    else:
-        admin_result = await Admin_Pydantic.from_tortoise_orm(admin)
-        content = api_result(code=status.HTTP_200_OK, message="登录成功", data=jsonable_encoder(admin_result))
         return JSONResponse(status_code=status.HTTP_200_OK, content=content)
 
 

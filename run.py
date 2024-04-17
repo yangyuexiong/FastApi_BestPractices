@@ -5,13 +5,12 @@
 # @File    : run.py
 # @Software: PyCharm
 
+import uvicorn
+
 from ApplicationExample import create_app
 
 app = create_app()
 
 if __name__ == '__main__':
-    import uvicorn
-
     # uvicorn.run(app, host="0.0.0.0", port=9999)
     uvicorn.run("run:app", host="0.0.0.0", port=9999, reload=True)
-    # uvicorn.run("run:app", host="192.168.50.149", port=9999, reload=True)

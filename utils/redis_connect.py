@@ -52,13 +52,17 @@ async def close_redis_connection_pool():
         await redis_pool.close()
 
 
-async def set_key_value(key, value):
+async def set_key_value(key, value, ex=None):
     """设置键值对"""
-    await redis_pool.set(key, value)
+    await redis_pool.set(key, value, ex)
 
 
 async def get_value(key):
     """获取键的值"""
-    print(">>> redis_pool id get_value", redis_pool, type(redis_pool), id(redis_pool))
     value = await redis_pool.get(key)
     return value
+
+
+async def delete_value(key):
+    """删除"""
+    await redis_pool.delete(key)
