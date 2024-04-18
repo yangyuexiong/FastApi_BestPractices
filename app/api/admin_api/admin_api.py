@@ -10,7 +10,11 @@ from all_reference import *
 from app.models.admin.models import Admin, Admin_Pydantic
 from utils.password_context import pwd_context
 
-admin_router = APIRouter()
+admin_router = APIRouter(
+    dependencies=[
+        Depends(get_token_header)
+    ]
+)
 
 
 class AdminCreate(BaseModel):
@@ -22,6 +26,8 @@ class AdminCreate(BaseModel):
     code: str = "00001"
     seat: str = "A666"
     remark: str = "新增备注"
+    creator: str = "test_creator"
+    creator_id: int = 1
 
 
 class AdminUpdateData(BaseModel):
@@ -30,7 +36,11 @@ class AdminUpdateData(BaseModel):
     mail: str = "yang6333yyx@126.com"
     code: str = "00001"
     seat: str = "A333"
+    login_type: str = "single"
+    is_tourist: int = 1
     remark: str = "编辑备注"
+    modifier: str = "test_modifier"
+    modifier_id: int = 1
 
 
 class AdminUpdate(BaseModel):
@@ -74,7 +84,7 @@ async def admin_pofile(admin_id: int):
 
 
 @admin_router.post("/")
-async def create_admin(request_data: AdminCreate):
+async def create_admin(request_data: AdminCreate, user_info: dict = Depends(get_token_header)):
     """新增admin账号"""
 
     admin_username = request_data.username
@@ -87,6 +97,8 @@ async def create_admin(request_data: AdminCreate):
         # 加密密码
         hashed_password = pwd_context.hash(request_data.password)
         request_data.password = hashed_password
+        request_data.creator_id = user_info.get("id")
+        request_data.creator = user_info.get("username")
 
         # 创建新的管理员账号
         new_admin = await Admin.create(**request_data.dict(exclude_unset=True))
@@ -96,10 +108,12 @@ async def create_admin(request_data: AdminCreate):
 
 
 @admin_router.put("/")
-async def update_admin(request_data: AdminUpdate):
+async def update_admin(request_data: AdminUpdate, user_info: dict = Depends(get_token_header)):
     """更新admin信息"""
 
     admin_id = request_data.id
+    request_data.admin_data.modifier_id = user_info.get("id")
+    request_data.admin_data.modifier = user_info.get("username")
     admin_data = request_data.admin_data
     admin = await Admin.get_or_none(id=admin_id)
 
@@ -114,7 +128,7 @@ async def update_admin(request_data: AdminUpdate):
 
 
 @admin_router.delete("/")
-async def delete_admin(request_data: AdminDelete):
+async def delete_admin(request_data: AdminDelete, user_info: dict = Depends(get_token_header)):
     """删除(禁用)admin"""
 
     admin_id = request_data.id
@@ -124,7 +138,12 @@ async def delete_admin(request_data: AdminDelete):
         content = api_result(code=10002, message=f"管理员用户 {admin_id} 不存在")
         return JSONResponse(status_code=status.HTTP_200_OK, content=content)
     else:
-        await admin.update_from_dict({"is_deleted": admin_id}).save()
+        ud = {
+            "is_deleted": admin_id,
+            "modifier": user_info.get("username"),
+            "modifier_id": user_info.get("id"),
+        }
+        await admin.update_from_dict(ud).save()
         content = api_result(code=status.HTTP_200_OK)
         return JSONResponse(status_code=status.HTTP_200_OK, content=content)
 

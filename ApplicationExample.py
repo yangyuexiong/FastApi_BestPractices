@@ -46,10 +46,6 @@ class MyMiddleware(BaseHTTPMiddleware):
         logger.info('=== resp_headers ===')
         json_format(resp_headers)
 
-        # token = request.headers.get('token')
-        # if token != "":
-        #     raise
-
         return response
 
 

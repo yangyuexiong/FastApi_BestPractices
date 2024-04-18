@@ -8,8 +8,11 @@
 import uuid
 import json
 
+from fastapi import Header
+
 import utils.redis_connect as rp
 from utils.redis_connect import get_value, set_key_value
+from common.libs.custom_exception import CustomException
 
 
 class Token:
@@ -68,3 +71,15 @@ class Token:
         await self.gen_token()
         await set_key_value(f"{key}{self.token}", self.token, self.timeout)  # 设置新token
         await set_key_value(self.token, user_info_json_str, self.timeout)  # 设置用户信息
+
+
+async def get_token_header(token: str = Header()):
+    """校验token"""
+
+    query_user_info = await get_value(token)
+    print(query_user_info)
+    if not query_user_info:
+        raise CustomException(status_code=401, detail="未授权", custom_code=401)
+    else:
+        user_info = json.loads(query_user_info)
+        return user_info

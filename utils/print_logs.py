@@ -33,7 +33,10 @@ async def print_logs(request):
     form_data = await request.form()
 
     if method != "GET":
-        json_data = await request.json()
+        try:
+            json_data = await request.json()
+        except BaseException as e:
+            json_data = {}
     else:
         json_data = {}
 
