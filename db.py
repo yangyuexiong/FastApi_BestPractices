@@ -19,6 +19,7 @@ db_url = "mysql://{}:{}@{}:{}/{}".format(
 )
 print(db_url)
 models_list = [
+    "app.models.admin.models",
     "app.models.user.models",
     "aerich.models",
 ]
