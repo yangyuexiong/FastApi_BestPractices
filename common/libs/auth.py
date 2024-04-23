@@ -58,8 +58,10 @@ class Token:
         old_token_list = [await get_value(old_key) for old_key in old_key_list]
         print(old_key_list)
         print(old_token_list)
-        await rp.redis_pool.delete(*old_key_list)
-        await rp.redis_pool.delete(*old_token_list)
+        if old_key_list:
+            await rp.redis_pool.delete(*old_key_list)
+        if old_token_list:
+            await rp.redis_pool.delete(*old_token_list)
 
         await self.gen_token()
         await set_key_value(f"{key}{self.token}", self.token, self.timeout)  # 设置新token
