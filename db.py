@@ -7,6 +7,7 @@
 
 
 from config.config import get_config
+from utils.db_connect import models_list
 
 project_config = get_config()
 
@@ -18,11 +19,6 @@ db_url = "mysql://{}:{}@{}:{}/{}".format(
     project_config.MYSQL_DATABASE
 )
 print(db_url)
-models_list = [
-    "app.models.admin.models",
-    "app.models.user.models",
-    "aerich.models",
-]
 
 TORTOISE_CONFIG = {
     "connections": {
