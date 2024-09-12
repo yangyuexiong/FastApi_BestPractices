@@ -1,173 +1,189 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2024/4/13 18:43
+# @Time    : 2024/8/24 15:52
 # @Author  : yangyuexiong
 # @Email   : yang6333yyx@126.com
 # @File    : admin_api.py
 # @Software: PyCharm
 
+from tortoise.expressions import Q
+
 from all_reference import *
+from app.models.admin.models import Admin, hash_password
 
-from app.models.admin.models import Admin, Admin_Pydantic
-from utils.password_context import pwd_context
-
-admin_router = APIRouter(
-    dependencies=[
-        Depends(get_token_header)
-    ]
-)
+admin_router = APIRouter()
 
 
-class AdminCreate(BaseModel):
-    username: str = "yyx"
-    password: str = "123456"
-    nickname: str = "昵称-xxx"
-    phone: str = "15011111111"
-    mail: str = "yang6333yyx@126.com"
-    code: str = "00001"
-    seat: str = "A666"
-    remark: str = "新增备注"
-    creator: str = "test_creator"
-    creator_id: int = 1
+class CreateAdminReqData(CommonPydanticCreate):
+    code: str
+    username: str
+    nickname: str
+    mail: str
+    phone: str | int
+    password: str
 
 
-class AdminUpdateData(BaseModel):
-    nickname: str = "昵称-xxx"
-    phone: str = "15012345678"
-    mail: str = "yang6333yyx@126.com"
-    code: str = "00001"
-    seat: str = "A333"
-    login_type: str = "single"
-    is_tourist: int = 1
-    remark: str = "编辑备注"
-    modifier: str = "test_modifier"
-    modifier_id: int = 1
+class UpdateAdminReqData(CommonPydanticUpdate):
+    nickname: str
+    mail: str
+    phone: str | int
 
 
-class AdminUpdate(BaseModel):
-    id: int = 1
-    admin_data: AdminUpdateData
-
-
-class AdminDelete(BaseModel):
-    id: int = 1
+class DeleteAdminReqData(BaseModel):
+    id: int
+    status: str | int
 
 
 class AdminPage(CommonPage):
-    username: str = "admin"
-    creator_id: int = 0
+    creator_id: Union[int, None] = None
+    code: Union[str, None] = None
+    username: Union[str, None] = None
+    nickname: Union[str, None] = None
+    mail: Union[str, None] = None
+    phone: Union[str, None] = None
 
 
-class AdminOut(BaseModel):
-    create_time: datetime
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={
-            datetime: lambda dt: dt.strftime("%Y-%m-%d %H:%M:%S")
-        }
-    )
+async def create_admin_validator(request_data: CreateAdminReqData) -> CreateAdminReqData:
+    """Admin验证器"""
+
+    username = request_data.username
+    if not username:
+        raise CustomException(detail="用户名不能为空", custom_code=10001)
+
+    password = request_data.password
+    if not password:
+        raise CustomException(detail="密码不能为空", custom_code=10001)
+
+    mail = request_data.mail
+    if not mail:
+        raise CustomException(detail="邮箱不能为空", custom_code=10001)
+
+    code = request_data.code
+    phone = request_data.phone
+    query_admin = await Admin.filter(
+        Q(code=code) | Q(username=username) | Q(mail=mail) | Q(phone=phone)
+    ).all()
+
+    if query_admin:
+        for admin in query_admin:
+            if admin.username == username:
+                raise CustomException(detail=f"用户名: {username} 已存在", custom_code=10003)
+            elif admin.mail == mail:
+                raise CustomException(detail=f"邮箱: {mail} 已存在", custom_code=10003)
+            elif admin.code == code:
+                raise CustomException(detail=f"工号: {code} 已存在", custom_code=10003)
+            elif admin.phone == str(phone):
+                raise CustomException(detail=f"手机号: {phone} 已存在", custom_code=10003)
+
+    return request_data
 
 
 @admin_router.get("/{admin_id}")
-async def admin_pofile(admin_id: int):
-    """admin个人信息"""
+async def admin_detail(admin_id: int, admin: Admin = Depends(check_admin_existence)):
+    """用户详情"""
 
-    admin = await Admin.get_or_none(id=admin_id)
-
-    if not admin:
-        content = api_result(code=10002, message=f"管理员用户 {admin_id} 不存在")
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
+    query_admin = await Admin.get_or_none(id=admin_id)
+    if not query_admin:
+        return api_response(code=10002, message=f"用户 {admin_id} 不存在")
     else:
-        admin_pydantic = await Admin_Pydantic.from_tortoise_orm(admin)
-        content = api_result(code=status.HTTP_200_OK, data=jsonable_encoder(admin_pydantic))
-
-    return JSONResponse(status_code=status.HTTP_200_OK, content=content)
+        return api_response(data=jsonable_encoder(query_admin, exclude={"password"}))
 
 
-@admin_router.post("/")
-async def create_admin(request_data: AdminCreate, user_info: dict = Depends(get_token_header)):
-    """新增admin账号"""
+@admin_router.post("")
+async def create_admin(
+        request_data: CreateAdminReqData = Depends(create_admin_validator),
+        admin: Admin = Depends(check_admin_existence)
+):
+    """新增用户"""
 
-    admin_username = request_data.username
-    admin = await Admin.filter(username=admin_username).first()
-
-    if admin:
-        content = api_result(code=10003, message=f"管理员用户 {admin_username} 已存在")
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
-    else:
-        # 加密密码
-        hashed_password = pwd_context.hash(request_data.password)
-        request_data.password = hashed_password
-        request_data.creator_id = user_info.get("id")
-        request_data.creator = user_info.get("username")
-
-        # 创建新的管理员账号
-        new_admin = await Admin.create(**request_data.dict(exclude_unset=True))
-        new_admin_pydantic = await Admin_Pydantic.from_tortoise_orm(new_admin)
-        content = api_result(code=status.HTTP_201_CREATED, data=jsonable_encoder(new_admin_pydantic))
-        return JSONResponse(status_code=status.HTTP_201_CREATED, content=content)
+    request_data.creator_id = admin.id
+    request_data.creator = admin.username
+    save_data = request_data.dict()
+    save_data["password"] = hash_password(request_data.password)
+    await Admin.create(**save_data)
+    return api_response(http_code=status.HTTP_201_CREATED, code=201)
 
 
-@admin_router.put("/")
-async def update_admin(request_data: AdminUpdate, user_info: dict = Depends(get_token_header)):
-    """更新admin信息"""
+@admin_router.post("/update")
+async def update_admin(
+        request_data: UpdateAdminReqData,
+        admin: Admin = Depends(check_admin_existence)
+):
+    """编辑用户"""
 
     admin_id = request_data.id
-    request_data.admin_data.modifier_id = user_info.get("id")
-    request_data.admin_data.modifier = user_info.get("username")
-    admin_data = request_data.admin_data
-    admin = await Admin.get_or_none(id=admin_id)
+    query_admin = await Admin.get_or_none(id=admin_id)
+    if not query_admin:
+        return api_response(code=10002, message=f"用户 {admin_id} 不存在")
 
-    if not admin:
-        content = api_result(code=10002, message=f"管理员用户 {admin_id} 不存在")
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
-    else:
-        await admin.update_from_dict(admin_data.dict(exclude_unset=True)).save()
-        admin_result = await Admin_Pydantic.from_tortoise_orm(admin)
-        content = api_result(code=status.HTTP_200_OK, data=jsonable_encoder(admin_result))
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
+    nickname = request_data.nickname
+    if not nickname:
+        raise CustomException(detail="昵称不能为空", custom_code=10001)
+
+    mail = request_data.mail
+    if not mail:
+        raise CustomException(detail="邮箱不能为空", custom_code=10001)
+
+    phone = request_data.phone
+    query_admins = await Admin.filter(
+        Q(nickname=nickname) | Q(mail=mail) | Q(phone=phone)
+    ).all()
+
+    if query_admins:
+        for admin in query_admins:
+            print(admin.phone, type(admin.phone), phone, type(phone))
+            if admin.mail == mail and admin.id != admin_id:
+                raise CustomException(detail=f"邮箱: {mail} 已存在", custom_code=10003)
+            elif admin.nickname == nickname and admin.id != admin_id:
+                raise CustomException(detail=f"昵称: {nickname} 已存在", custom_code=10003)
+            elif str(admin.phone) == str(phone) and admin.id != admin_id:
+                raise CustomException(detail=f"手机号: {phone} 已存在", custom_code=10003)
+
+    request_data.modifier_id = admin.id
+    request_data.modifier = admin.username
+    update_data = request_data.dict()
+    del update_data["id"]
+    await query_admin.update_from_dict(update_data).save()
+    return api_response(http_code=status.HTTP_201_CREATED, code=201)
 
 
-@admin_router.delete("/")
-async def delete_admin(request_data: AdminDelete, user_info: dict = Depends(get_token_header)):
-    """删除(禁用)admin"""
+@admin_router.post("/delete")
+async def delete_admin(
+        request_data: DeleteAdminReqData,
+        admin: Admin = Depends(check_admin_existence)
+):
+    """删除(禁用)用户"""
 
     admin_id = request_data.id
-    admin = await Admin.get_or_none(id=admin_id)
-
-    if not admin:
-        content = api_result(code=10002, message=f"管理员用户 {admin_id} 不存在")
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
+    query_admin = await Admin.get_or_none(id=admin_id)
+    if not query_admin:
+        return api_response(code=10002, message=f"用户 {admin_id} 不存在")
+    elif admin.id not in (1, 2, 3):
+        return api_response(code=10002, message="无权限")
+    elif query_admin.username == "admin":
+        return api_response(code=10002, message=f"管理员账户不能被禁用")
+    elif admin_id in (1, 2, 3):
+        return api_response(code=10002, message=f"用户 {admin_id} 不能被禁用")
     else:
         ud = {
             "is_deleted": admin_id,
-            "modifier": user_info.get("username"),
-            "modifier_id": user_info.get("id"),
+            "modifier": admin.username,
+            "modifier_id": admin.id,
+            "status": request_data.status,
         }
-        await admin.update_from_dict(ud).save()
-        content = api_result(code=status.HTTP_200_OK)
-        return JSONResponse(status_code=status.HTTP_200_OK, content=content)
+        await query_admin.update_from_dict(ud).save()
+        return api_response()
 
 
-@admin_router.post("/admin_page")
-async def admin_page(request_data: AdminPage):
-    """admin列表"""
+@admin_router.post("/page")
+async def admin_page(request_data: AdminPage, admin: Admin = Depends(check_admin_existence)):
+    """用户列表"""
 
-    q = {
-        # "username": request_data.username
-        "username__icontains": request_data.username
-    }
-    if request_data.creator_id:
-        q["creator_id"] = request_data.creator_id
-
-    print(q)
-
-    page = request_data.page
-    size = request_data.size
-    page, size = await page_size(page, size)
-
-    admins = await Admin.filter(**q).offset(page).limit(size)
-    print(admins)
-
-    admins_pydantic = [await Admin_Pydantic.from_tortoise_orm(admin) for admin in admins]
-    content = api_result(code=status.HTTP_200_OK, data=jsonable_encoder(admins_pydantic), is_pop=False)
-    return JSONResponse(status_code=status.HTTP_200_OK, content=content)
+    data = await cpq(
+        request_data, Admin,
+        None,
+        ["code", "username", "nickname", "mail", "phone"],
+        ["creator_id"],
+        ["-update_time"],
+        {"password"}
+    )
+    return api_response(data=data)

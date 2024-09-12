@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2024/2/18 17:07
+# @Time    : 2024/7/17 15:34
 # @Author  : yangyuexiong
 # @Email   : yang6333yyx@126.com
 # @File    : config.py
@@ -16,7 +16,7 @@ class BaseConfig(BaseSettings):
     """配置基类"""
 
     # 基础配置
-    app_name: str = "yangyuexiong"
+    APP_NAME: str = "yangyuexiong"
     ENV: str
     SECRET_KEY: str
     DEBUG: bool
@@ -29,6 +29,13 @@ class BaseConfig(BaseSettings):
     MYSQL_PASSWORD: str
     MYSQL_PORT: int
     MYSQL_DATABASE: str
+
+    # POSTGRESQL配置
+    POSTGRESQL_HOSTNAME: str
+    POSTGRESQL_USERNAME: str
+    POSTGRESQL_PASSWORD: str
+    POSTGRESQL_PORT: int
+    POSTGRESQL_DATABASE: str
 
     # Redis配置
     REDIS_HOST: str
@@ -68,7 +75,7 @@ def get_config():
 if __name__ == '__main__':
     dev_config = DevelopmentConfig()
     print(dev_config.dict())
-    print(dev_config.app_name)
+    print(dev_config.APP_NAME)
     print(dev_config.MYSQL_HOSTNAME)
 
     pro_config = ProductionConfig()

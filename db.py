@@ -6,36 +6,40 @@
 # @Software: PyCharm
 
 
-from config.config import get_config
+from utils.db_connect import db_url as mysql_db_url
+from utils.db_connect import pg_db_url as postgres_db_url
 from utils.db_connect import models_list
-
-project_config = get_config()
-
-db_url = "mysql://{}:{}@{}:{}/{}".format(
-    project_config.MYSQL_USERNAME,
-    project_config.MYSQL_PASSWORD,
-    project_config.MYSQL_HOSTNAME,
-    project_config.MYSQL_PORT,
-    project_config.MYSQL_DATABASE
-)
-print(db_url)
 
 TORTOISE_CONFIG = {
     "connections": {
-        "default": db_url,
+        "default": mysql_db_url,
+        # "default": postgres_db_url,
+        # "mysql_db": mysql_db_url
     },
     "apps": {
         "models": {
             "models": models_list,
             "default_connection": "default",
-        }
+        },
+        # "postgres_models": {
+        #     "models": models_list,
+        #     "default_connection": "default",
+        # },
+        # "mysql_models": {
+        #     "models": models_list,
+        #     "default_connection": "mysql_db",
+        # }
     },
+    'use_tz': True,  # 确保 Tortoise 使用带时区的 datetime
+    'timezone': 'Asia/Shanghai',
 }
 
+print(mysql_db_url)
 """
 aerich init -t db.TORTOISE_CONFIG
 aerich init-db
 
+aerich --app mysql_models init-db
 
 aerich migrate --name test
 aerich upgrade

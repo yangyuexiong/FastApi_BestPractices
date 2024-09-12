@@ -8,11 +8,12 @@
 import uuid
 import json
 
-from fastapi import Header
+from fastapi import Header, Depends
 
 import utils.redis_connect as rp
 from utils.redis_connect import get_value, set_key_value
 from common.libs.custom_exception import CustomException
+from app.models.admin.models import Admin
 
 
 class Token:
@@ -81,7 +82,17 @@ async def get_token_header(token: str = Header()):
     query_user_info = await get_value(token)
     print(query_user_info)
     if not query_user_info:
-        raise CustomException(status_code=401, detail="未授权", custom_code=401)
+        raise CustomException(detail="未授权", custom_code=401)
     else:
         user_info = json.loads(query_user_info)
         return user_info
+
+
+async def check_admin_existence(user_info: dict = Depends(get_token_header)):
+    """检查后台用户是否存在"""
+
+    admin_id = user_info.get("id")
+    admin = await Admin.get_or_none(id=admin_id)
+    if not admin:
+        raise CustomException(detail=f"后台用户 {admin_id} 不存在", custom_code=10002)
+    return admin

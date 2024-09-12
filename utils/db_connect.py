@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2024/3/16 16:40
+# @Time    : 2024/7/17 15:33
 # @Author  : yangyuexiong
 # @Email   : yang6333yyx@126.com
 # @File    : db_connect.py
@@ -22,9 +22,16 @@ db_url = "mysql://{}:{}@{}:{}/{}".format(
     project_config.MYSQL_DATABASE
 )
 
+pg_db_url = "postgres://{}:{}@{}:{}/{}".format(
+    project_config.POSTGRESQL_USERNAME,
+    project_config.POSTGRESQL_PASSWORD,
+    project_config.POSTGRESQL_HOSTNAME,
+    project_config.POSTGRESQL_PORT,
+    project_config.POSTGRESQL_DATABASE
+)
+
 models_list = [
     "aerich.models",
-    "app.models.user.models",
     "app.models.admin.models"
 ]
 
@@ -68,6 +75,19 @@ async def db_init():
     print(f'Mysql初始化:{db_url}')
 
 
+async def db_init_pg():
+    """数据库初始化"""
+
+    await Tortoise.init(
+        db_url=pg_db_url,
+        modules={
+            "models": models_list
+        }
+    )
+
+    print(f'Postgresql初始化:{pg_db_url}')
+
+
 async def db_init_debug():
     """数据库初始化(调试)"""
 
@@ -105,5 +125,3 @@ if __name__ == '__main__':
         aerich migrate
         aerich upgrade
     """
-
-

@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2024/4/5 17:33
+# @Time    : 2024/7/17 15:33
 # @Author  : yangyuexiong
 # @Email   : yang6333yyx@126.com
 # @File    : redis_connect.py
 # @Software: PyCharm
 
 
-import aioredis
-from aioredis import Redis
-
+from redis.asyncio import Redis
 from config.config import get_config
 
 project_config = get_config()
@@ -43,7 +41,7 @@ redis_pool: Redis = None
 async def create_redis_connection_pool():
     """在应用启动时创建连接池"""
     global redis_pool
-    redis_pool = await aioredis.from_url(REDIS_URL)
+    redis_pool = await Redis.from_url(REDIS_URL)
 
 
 async def close_redis_connection_pool():
@@ -66,3 +64,20 @@ async def get_value(key):
 async def delete_value(key):
     """删除"""
     await redis_pool.delete(key)
+
+
+async def redis_one_get(k):
+    """单点连接"""
+
+    redis = Redis.from_url(REDIS_URL)
+    res = await redis.get(k)
+    await redis.close()
+    return res
+
+
+async def redis_one_set(k, v):
+    """单点连接"""
+
+    redis = Redis.from_url(REDIS_URL)
+    await redis.set(k, v)
+    await redis.close()

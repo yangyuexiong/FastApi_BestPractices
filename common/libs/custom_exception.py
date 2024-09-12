@@ -10,7 +10,7 @@ from fastapi import HTTPException
 
 # 自定义异常
 class CustomException(HTTPException):
-    def __init__(self, status_code: int, detail: str, custom_code: int, data: any = None):
+    def __init__(self, status_code: int = 200, detail: str = "出现异常", custom_code: int = 200, data: any = None):
         super().__init__(status_code=status_code, detail=detail)
         self.custom_code = custom_code
         self.data = data

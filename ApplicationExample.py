@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2024/2/2 17:05
+# @Time    : 2024/7/17 14:29
 # @Author  : yangyuexiong
 # @Email   : yang6333yyx@126.com
 # @File    : ApplicationExample.py
@@ -14,8 +14,10 @@ import threading
 import shortuuid
 from loguru import logger
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 from tortoise import Tortoise
 
@@ -24,6 +26,8 @@ from config.config import get_config
 from utils.print_logs import print_logs, json_format
 from utils.db_connect import db_init
 from utils.redis_connect import create_redis_connection_pool, close_redis_connection_pool
+from utils.scheduled_tasks.task_handler import scheduler, scheduler_init
+# from g import global_object_init, GlobalObject
 
 from common.libs.custom_exception import CustomException
 
@@ -74,6 +78,13 @@ async def startup_event():
     import utils.redis_connect as rp
     print(rp.redis_pool, type(rp.redis_pool), id(rp.redis_pool))
 
+    # print(">>> 全局对象初始化")
+    # await global_object_init()
+
+    # scheduler.start()
+    await scheduler_init()
+    print(">>> 定时任务初始化")
+
 
 async def shutdown_event():
     """应用关闭后执行"""
@@ -89,21 +100,25 @@ async def shutdown_event():
     await close_redis_connection_pool()
     print(rp.redis_pool, type(rp.redis_pool), id(rp.redis_pool))
 
+    # 关闭定时任务
+    scheduler.shutdown()
+
 
 def create_app():
     """app实例"""
 
+    debug = project_config.DEBUG
     kw = {
-        "debug": project_config.DEBUG
+        "debug": debug
     }
 
-    if not project_config.DEBUG:  # `debug`为`False`时关闭接口文档访问
-        kw["docs_url"] = None
-        kw["redoc_url"] = None
+    # if not debug:  # `debug`为`False`时关闭接口文档访问
+    #     kw["docs_url"] = None
+    #     kw["redoc_url"] = None
 
     print(kw)
     app = FastAPI(
-        title="FastApi_BestPractices",
+        title="Exile Chat",
         description="description",
         summary="I hope everything has best practices.",
         version="1.0.0",
@@ -126,13 +141,13 @@ def create_app():
     @app.on_event("startup")
     async def startup_event():
         print(">>> startup")
-        
+
         app.state.app = app # 绑定 app或其他属性 到 request.app
 
     @app.on_event("shutdown")
     def shutdown_event():
         print(">>> shutdown")
-    
+
     应用实例注册写法:
     app.add_event_handler("startup", startup_event)
     app.add_event_handler("shutdown", shutdown_event)
@@ -154,11 +169,11 @@ def create_app():
         response.headers["X-Process-Time"] = str(process_time)
         response.headers["X-Log-UUID"] = log_uuid
         return response
-    
+
     @app.middleware("http")
     async def middleware_2(request: Request, call_next):
         ...
-    
+
     注册方式二:
     app.add_middleware(MyMiddleware)
     """
@@ -191,7 +206,39 @@ def create_app():
         }
         return JSONResponse(status_code=500, content=content)
 
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request, exc):
+        if debug:
+            error_messages = []
+            for error in exc.errors():
+                error_messages.append({
+                    "type": "validation_error",
+                    "msg": error.get("msg"),
+                    "loc": list(error.get("loc")),
+                    "input": error.get("type"),
+                    "debug": debug
+                })
+
+            content = {
+                "code": 400,
+                "message": "缺少必要的参数，参数类型错误",
+                "data": error_messages
+            }
+            return JSONResponse(status_code=400, content=content)
+
+        content = {
+            "code": 400,
+            "message": "缺少必要的参数，参数类型错误",
+            "data": {
+                "debug": debug
+            }
+        }
+        return JSONResponse(status_code=400, content=content)
+
     # 路由注册
     app.include_router(api)
+
+    # 静态资源(生产环境通过配置获取路径)
+    app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
     return app

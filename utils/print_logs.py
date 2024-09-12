@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2024/4/8 16:47
+# @Time    : 2024/7/17 15:33
 # @Author  : yangyuexiong
 # @Email   : yang6333yyx@126.com
 # @File    : print_logs.py
@@ -9,6 +9,15 @@
 import json
 
 from loguru import logger
+
+
+def get_req_ip(request):
+    """ip"""
+
+    ip = request.headers.get('X-Forwarded-For')
+    if ip in ("127.0.0.1", None):
+        return "0.0.0.0"
+    return ip
 
 
 def json_format(data):
@@ -24,13 +33,21 @@ async def print_logs(request):
     """美化日志输出"""
 
     host = request.client.host
-    ip_address = request.headers.get('X-Forwarded-For')
+    # ip_address = request.headers.get('X-Forwarded-For')
+    ip_address = get_req_ip(request)
     method = request.method
     path = request.url.path
     headers = {t[0]: t[1] for t in request.headers.items()}
+    is_multipart = headers.get("content-type", "").startswith("multipart/form-data")
 
     params = request.query_params
-    form_data = await request.form()
+    try:
+        if is_multipart:
+            form_data = {}
+        else:
+            form_data = await request.form()
+    except BaseException as e:
+        form_data = {}
 
     if method != "GET":
         try:
