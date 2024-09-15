@@ -208,54 +208,20 @@ async def scheduler_init():
             task_handler.add_task()
 
     th = TaskHandler(
-        task_id=TaskDict.alarm_email_notification.__name__,
+        task_id=TaskDict.test_task.__name__,
         trigger_type=TriggerType.interval,
         interval_kw={
             "weeks": 0,
             "days": 0,
             "hours": 0,
             "minutes": 0,
-            "seconds": 30,
+            "seconds": 5,
             "start_date": None,
             "end_date": None
         },
-        task_function_name=TaskDict.alarm_email_notification.__name__
+        task_function_name=TaskDict.test_task.__name__
     )
     result, message = th.add_task()
-    print(result, message)
-
-    th2 = TaskHandler(
-        task_id=TaskDict.alarm_dingding_notification.__name__,
-        trigger_type=TriggerType.interval,
-        interval_kw={
-            "weeks": 0,
-            "days": 0,
-            "hours": 0,
-            "minutes": 0,
-            "seconds": 30,
-            "start_date": None,
-            "end_date": None
-        },
-        task_function_name=TaskDict.alarm_dingding_notification.__name__
-    )
-    result, message = th2.add_task()
-    print(result, message)
-
-    th3 = TaskHandler(
-        task_id=TaskDict.alarm_data_extraction.__name__,
-        trigger_type=TriggerType.interval,
-        interval_kw={
-            "weeks": 0,
-            "days": 0,
-            "hours": 0,
-            "minutes": 0,
-            "seconds": 30,
-            "start_date": None,
-            "end_date": None
-        },
-        task_function_name=TaskDict.alarm_data_extraction.__name__
-    )
-    result, message = th3.add_task()
     print(result, message)
 
     scheduler.start()
