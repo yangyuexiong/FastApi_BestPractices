@@ -54,7 +54,7 @@ async def admin_login(request_data: AdminLogin):
         return api_response(message="登录成功", data=result)
 
 
-@admin_login_router.post("/logout")
+@admin_login_router.delete("/logout")
 async def admin_logout(token: str = Header()):
     """admin退出"""
 

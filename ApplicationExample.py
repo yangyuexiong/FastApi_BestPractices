@@ -118,7 +118,7 @@ def create_app():
 
     print(kw)
     app = FastAPI(
-        title="Exile Chat",
+        title="FastApi_BestPractices",
         description="description",
         summary="I hope everything has best practices.",
         version="1.0.0",
