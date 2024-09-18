@@ -88,7 +88,7 @@ async def admin_detail(admin_id: int, admin: Admin = Depends(check_admin_existen
         return api_response(data=jsonable_encoder(query_admin, exclude={"password"}))
 
 
-@admin_router.post("")
+@admin_router.post("/create")
 async def create_admin(
         request_data: CreateAdminReqData = Depends(create_admin_validator),
         admin: Admin = Depends(check_admin_existence)
@@ -103,7 +103,7 @@ async def create_admin(
     return api_response(http_code=status.HTTP_201_CREATED, code=201)
 
 
-@admin_router.post("/update")
+@admin_router.put("/update")
 async def update_admin(
         request_data: UpdateAdminReqData,
         admin: Admin = Depends(check_admin_existence)
@@ -146,7 +146,7 @@ async def update_admin(
     return api_response(http_code=status.HTTP_201_CREATED, code=201)
 
 
-@admin_router.post("/delete")
+@admin_router.delete("/delete")
 async def delete_admin(
         request_data: DeleteAdminReqData,
         admin: Admin = Depends(check_admin_existence)

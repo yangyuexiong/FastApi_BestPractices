@@ -19,7 +19,7 @@ admin = APIRouter(prefix="/admin", tags=["后台"])
 
 # 三级路由-后台
 admin.include_router(auth_router, prefix="/auth", tags=["鉴权"])
-admin.include_router(admin_router, prefix="/admin", tags=["用户管理"])
+admin.include_router(admin_router, tags=["用户管理"])
 admin.include_router(admin_login_router, prefix="/account", tags=["账户"])
 
 # 统一注册
