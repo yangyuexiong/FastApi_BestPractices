@@ -24,7 +24,7 @@ from tortoise import Tortoise
 from app.api import api
 from config.config import get_config
 from utils.print_logs import print_logs, json_format
-from utils.db_connect import db_init
+from utils.db_connect import db_init, TORTOISE_CONFIG
 from utils.redis_connect import create_redis_connection_pool, close_redis_connection_pool
 from utils.scheduled_tasks.task_handler import scheduler, scheduler_init
 # from g import global_object_init, GlobalObject
@@ -71,7 +71,9 @@ async def startup_event():
     print(f'>>> Config初始化:{project_config.ENV}')
 
     print(">>> Mysql连接池初始化")
-    await db_init()
+    # await db_init()
+    await Tortoise.init(config=TORTOISE_CONFIG)
+    print(">>> Tortoise ORM 初始化完成")
 
     print(">>> Redis连接池初始化")
     await create_redis_connection_pool()

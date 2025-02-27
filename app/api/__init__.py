@@ -15,12 +15,12 @@ from app.api.admin_api.admin_login_api import admin_login_router
 api = APIRouter(prefix="/api", tags=["api"], responses={404: {"description": "Not found"}})
 
 # 二级路由
-admin = APIRouter(prefix="/admin", tags=["后台"])
+# admin = APIRouter(prefix="/admin", tags=["后台"])
 
 # 三级路由-后台
-admin.include_router(auth_router, prefix="/auth", tags=["鉴权"])
-admin.include_router(admin_router, tags=["用户管理"])
-admin.include_router(admin_login_router, prefix="/account", tags=["账户"])
+api.include_router(auth_router, prefix="/auth", tags=["鉴权"])
+api.include_router(admin_router, prefix="/admin", tags=["用户管理"])
+api.include_router(admin_login_router, prefix="/account", tags=["账户"])
 
 # 统一注册
-api.include_router(admin)
+# api.include_router(admin)

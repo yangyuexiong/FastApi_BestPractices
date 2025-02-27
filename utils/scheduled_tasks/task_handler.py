@@ -32,6 +32,7 @@ class TriggerHandler:
 
     def __init__(self, task_id: str, trigger_type: TriggerType, trigger_time: str = None, interval_kw: dict = None,
                  cron_expression: str = None, timezone=pytz.timezone('Asia/Shanghai'), task_function_name: str = None,
+                 skip_function_check: bool = False, task_function=None,
                  task_function_args: list = None, task_function_kwargs: dict = None):
 
         self.task_id = task_id  # 任务ID(自定义)
@@ -43,7 +44,8 @@ class TriggerHandler:
         self.cron_expression = cron_expression  # 使用`CronTrigger`必须的参数 例: `0 15 10 * *`
         self.timezone = timezone  # 时区默认中国
         self.task_function_name = task_function_name  # 定时任务函数名称
-        self.task_function = None  # 任务函数`get_task_function`返回设值
+        self.skip_function_check = skip_function_check  # 忽略函数检查跳过`self.get_task_function()`的逻辑,直接使用构造函数的`task_function`
+        self.task_function = task_function  # 任务函数`get_task_function`返回设值
         self.task_function_args = task_function_args  # 定时任务函数args参数
         self.task_function_kwargs = task_function_kwargs  # 定时任务函数kwargs参数
 
@@ -98,6 +100,9 @@ class TriggerHandler:
 
     def get_task_function(self):
         """获取任务函数"""
+
+        if self.skip_function_check:
+            return self.task_function
 
         if hasattr(TaskDict, self.task_function_name):
             self.task_function = getattr(TaskDict, self.task_function_name)
@@ -207,8 +212,8 @@ async def scheduler_init():
 
             task_handler.add_task()
 
-    th = TaskHandler(
-        task_id=TaskDict.test_task.__name__,
+    test1 = TaskHandler(
+        task_id=TaskDict.test_sync_task.__name__,
         trigger_type=TriggerType.interval,
         interval_kw={
             "weeks": 0,
@@ -219,9 +224,26 @@ async def scheduler_init():
             "start_date": None,
             "end_date": None
         },
-        task_function_name=TaskDict.test_task.__name__
+        task_function_name=TaskDict.test_sync_task.__name__
     )
-    result, message = th.add_task()
+    result, message = test1.add_task()
+    print(result, message)
+
+    test2 = TaskHandler(
+        task_id=TaskDict.test_async_task.__name__,
+        trigger_type=TriggerType.interval,
+        interval_kw={
+            "weeks": 0,
+            "days": 0,
+            "hours": 0,
+            "minutes": 0,
+            "seconds": 5,
+            "start_date": None,
+            "end_date": None
+        },
+        task_function_name=TaskDict.test_async_task.__name__
+    )
+    result, message = test2.add_task()
     print(result, message)
 
     scheduler.start()

@@ -44,7 +44,11 @@ TORTOISE_CONFIG = {
         "models": {
             "models": models_list,  # 指定包含模型定义的模块
             "default_connection": "default",
-        }
+        },
+        # "models_db2": {
+        #     "models": [],  # other_db 的模型模块
+        #     "default_connection": "other_db",
+        # },
     },
 }
 
@@ -72,7 +76,6 @@ async def db_init():
             "models": models_list
         }
     )
-
     print(f'Mysql初始化:{db_url}')
 
 
