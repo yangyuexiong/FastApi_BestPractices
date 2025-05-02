@@ -12,7 +12,7 @@ from app.api.admin_api.admin_api import admin_router
 from app.api.admin_api.admin_login_api import admin_login_router
 
 # 一级路由
-api = APIRouter(prefix="/api", tags=["api"], responses={404: {"description": "Not found"}})
+api = APIRouter(prefix="/api", responses={404: {"description": "Not found"}})
 
 # 二级路由
 # admin = APIRouter(prefix="/admin", tags=["后台"])

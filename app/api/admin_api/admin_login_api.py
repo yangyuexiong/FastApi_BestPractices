@@ -19,7 +19,7 @@ class AdminLogin(BaseModel):
     password: str
 
 
-@admin_login_router.post("/login")
+@admin_login_router.post("/login", summary="登录")
 async def admin_login(request_data: AdminLogin):
     """admin登录"""
 
@@ -54,7 +54,7 @@ async def admin_login(request_data: AdminLogin):
         return api_response(message="登录成功", data=result)
 
 
-@admin_login_router.delete("/logout")
+@admin_login_router.delete("/logout", summary="退出")
 async def admin_logout(token: str = Header()):
     """admin退出"""
 

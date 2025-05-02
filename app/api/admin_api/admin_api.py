@@ -95,7 +95,7 @@ async def create_admin_validator(request_data: CreateAdminReqData) -> CreateAdmi
     return request_data
 
 
-@admin_router.get("/{admin_id}")
+@admin_router.get("/{admin_id}", summary="用户详情")
 async def admin_detail(admin_id: int, admin: Admin = Depends(check_admin_existence)):
     """用户详情"""
 
@@ -106,7 +106,7 @@ async def admin_detail(admin_id: int, admin: Admin = Depends(check_admin_existen
         return api_response(data=jsonable_encoder(query_admin, exclude={"password"}))
 
 
-@admin_router.post("")
+@admin_router.post("", summary="新增用户")
 async def create_admin(
         request_data: CreateAdminReqData = Depends(create_admin_validator),
         admin: Admin = Depends(check_admin_existence)
@@ -121,7 +121,7 @@ async def create_admin(
     return api_response(http_code=status.HTTP_201_CREATED, code=201)
 
 
-@admin_router.put("")
+@admin_router.put("", summary="编辑用户")
 async def update_admin(
         request_data: UpdateAdminReqData,
         admin: Admin = Depends(check_admin_existence)
@@ -164,7 +164,7 @@ async def update_admin(
     return api_response(http_code=status.HTTP_201_CREATED, code=201)
 
 
-@admin_router.delete("")
+@admin_router.delete("", summary="删除(禁用)用户")
 async def delete_admin(
         request_data: DeleteAdminReqData,
         admin: Admin = Depends(check_admin_existence)
@@ -192,7 +192,7 @@ async def delete_admin(
         return api_response()
 
 
-@admin_router.post("/page")
+@admin_router.post("/page", summary="用户列表")
 async def admin_page(request_data: AdminPage, admin: Admin = Depends(check_admin_existence)):
     """用户列表"""
 
@@ -207,7 +207,7 @@ async def admin_page(request_data: AdminPage, admin: Admin = Depends(check_admin
     return api_response(data=data)
 
 
-@admin_router.post("/reset_password")
+@admin_router.post("/reset_password", summary="重置密码")
 async def reset_password(request_data: ResetPasswordReqData, token: str = Header()):
     """重置密码"""
 

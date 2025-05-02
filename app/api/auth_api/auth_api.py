@@ -10,7 +10,7 @@ from all_reference import *
 auth_router = APIRouter()
 
 
-@auth_router.get("")
+@auth_router.get("", summary="用户详情")
 async def user_info(admin=Depends(get_token_header)):
     """用户详情"""
 
