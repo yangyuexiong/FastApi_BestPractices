@@ -16,23 +16,23 @@ admin_router = APIRouter()
 
 
 class CreateAdminReqData(CommonPydanticCreate):
-    code: str | None = None
-    username: str
-    nickname: str
-    mail: str
-    phone: str | int
-    password: str
+    code: Optional[str] = Field(default=None, description="工号")
+    username: str = Field(description="用户名")
+    nickname: str = Field(description="昵称")
+    mail: str = Field(description="邮件")
+    phone: Union[str, int] = Field(description="手机号")
+    password: str = Field(description="密码")
 
 
 class UpdateAdminReqData(CommonPydanticUpdate):
-    nickname: str
-    mail: str
-    phone: str | int
+    nickname: str = Field(default=None, description="昵称")
+    mail: str = Field(default=None, description="邮件")
+    phone: Union[str, int] = Field(description="手机号")
 
 
 class DeleteAdminReqData(BaseModel):
-    id: int
-    status: str | int
+    id: Union[str, int] = Field(description="主键ID")
+    status: Union[str, int] = Field(description="状态")
 
 
 class AdminPage(CommonPage):
@@ -196,15 +196,16 @@ async def delete_admin(
 async def admin_page(request_data: AdminPage, admin: Admin = Depends(check_admin_existence)):
     """用户列表"""
 
-    data = await cpq(
-        request_data, Admin,
-        None,
-        ["code", "username", "nickname", "mail", "phone"],
-        ["creator_id", "is_deleted"],
-        ["-update_time"],
-        {"password"}
+    pq = CommonPaginateQuery(
+        request_data=request_data,
+        orm_model=Admin,
+        like_list=["code", "username", "nickname", "mail", "phone"],
+        where_list=["creator_id", "is_deleted"],
+        order_by_list=["-update_time"],
+        exclude_field={"password"}
     )
-    return api_response(data=data)
+    await pq.build_query()
+    return api_response(data=pq.normal_data)
 
 
 @admin_router.post("/reset_password", summary="重置密码")

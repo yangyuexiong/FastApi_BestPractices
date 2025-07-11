@@ -15,8 +15,8 @@ admin_login_router = APIRouter()
 
 
 class AdminLogin(BaseModel):
-    username: str
-    password: str
+    username: str = Field(description="用户名")
+    password: str = Field(description="密码")
 
 
 @admin_login_router.post("/login", summary="登录")

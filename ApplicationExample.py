@@ -128,11 +128,11 @@ def create_app():
         **kw
     )
 
-    # 跨域
+    # 跨域: 如果 allow_credentials=True，则 allow_origins 不能设置为 ["*"]，必须明确指定允许的域名。
     app.add_middleware(
-        CORSMiddleware,
+        CORSMiddleware,  # type: ignore
         allow_origins=["*"],
-        allow_credentials=True,
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"]
     )
@@ -180,7 +180,7 @@ def create_app():
     app.add_middleware(MyMiddleware)
     """
 
-    app.add_middleware(MyMiddleware)
+    app.add_middleware(MyMiddleware)  # type: ignore
 
     # 使用 app.add_exception_handler 方法添加异常处理程序
     # app.add_exception_handler(HTTPException, custom_exception_handler)
