@@ -123,6 +123,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -166,5 +168,4 @@ cython_debug/
 .idea
 .DS_Store
 /migrations
-/config/dev.ini
 /logs/*.log

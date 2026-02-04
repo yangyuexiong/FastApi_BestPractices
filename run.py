@@ -8,10 +8,6 @@
 
 import uvicorn
 
-from ApplicationExample import create_app
-
-app = create_app()
-
 if __name__ == '__main__':
     # uvicorn.run(app, host="0.0.0.0", port=9999)
-    uvicorn.run("run:app", host="0.0.0.0", port=7769, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=7769, reload=True)

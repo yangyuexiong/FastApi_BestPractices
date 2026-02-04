@@ -1,4 +1,34 @@
+[project]
+name = "fastapi-best-practices"
+version = "0.1.0"
+description = "FastAPI best practices project"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic-settings",
+    "shortuuid",
+    "loguru",
+    "tortoise-orm",
+    "redis",
+    "aiomysql",
+    "aerich",
+    "bcrypt",
+    "python-dateutil",
+    "apscheduler",
+    "httpx",
+    "requests",
+    "pytz",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+package = false
+
 [tool.aerich]
-tortoise_orm = "db.TORTOISE_CONFIG"
+tortoise_orm = "app.db.tortoise.TORTOISE_CONFIG"
 location = "./migrations"
-src_folder = "./."
+src_folder = "./app"

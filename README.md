@@ -10,10 +10,10 @@
 
 - Python3.12+
 - pip3
-- pipenv
+- uv
 
   ```shell script
-  pip3 install pipenv
+  pip3 install uv
   ```
 
 ## 二、配置虚拟环境
@@ -21,37 +21,22 @@
 - 进入项目根目录
 
   ```shell script
-  cd /FastApi_BestPractices
+  cd /Users/yangyuexiong/Desktop/FastApi_BestPractices
   ```
 
-- 修改 pipenv 的 pip 安装源(科学上网(翻墙)的同学可以忽略)
+- 可选：配置国内源（不需要翻墙的同学）
 
-    - [Pipfile](./Pipfile)
-
-  ```
-  Pipfile 文件修改如下:
-
-  # 国内pip安装源(不能翻墙的同学修改如下,在可以翻墙的情况下依旧国内pip源比较快)
-  url = "https://pypi.doubanio.com/simple"
-
-  # 国外pip安装源(可以翻墙)
-  url = "https://pypi.org/simple"
-
-  # 修改对应的 Python 版本
-  [requires]
-  python_version = "3.12"
+  ```shell
+  export UV_INDEX_URL=https://pypi.doubanio.com/simple
   ```
 
 - 安装虚拟环境与依赖的包
 
   ```shell script
-  pipenv install
-  ```
-
-- 进入虚拟环境
-
-  ```shell script
-  pipenv shell
+  uv venv
+  source .venv/bin/activate
+  uv lock
+  uv sync
   ```
 - `PyCharm`等配置请查阅(`Flask最佳实践`: https://github.com/yangyuexiong/Flask_BestPractices -> `二、配置虚拟环境`)
 
@@ -59,23 +44,51 @@
 
 - 前置准备(如:创建数据库)
 
-    - [/config/dev.ini](./config/dev.ini)
-    - [/config/pro.ini](./config/pro.ini)
+    - `/.env.development`
+    - `/.env.test`
+    - `/.env.staging`
+    - `/.env.production`
+
+## 项目结构
+
+```
+FastApi_BestPractices/
+├─ app/
+│  ├─ api/                 # 路由与接口
+│  │  └─ v1/
+│  │     └─ routers/       # 业务路由
+│  ├─ core/                # 配置、异常、生命周期、中间件、通用能力
+│  ├─ db/                  # 数据库与缓存连接
+│  ├─ models/              # ORM 模型
+│  ├─ schemas/             # Pydantic 入参/出参模型
+│  ├─ tasks/               # 定时任务与调度
+│  ├─ utils/               # 通用工具
+│  ├─ static/              # 静态资源
+│  └─ main.py              # 应用入口
+├─ docker/                 # 部署与容器配置
+├─ migrations/             # 数据库迁移
+├─ scripts/                # 初始化脚本等
+├─ tests/                  # 测试
+├─ .env.*                  # 多环境配置
+├─ Dockerfile
+├─ pyproject.toml
+└─ README.md
+```
 
 ## 四、ORM
 
-- [db.py](./db.py)
-- [db_connect.py](./utils/db_connect.py) 新的的模型需要在`models_list`中添加,例如`app.models.aps_task.models`
+- [tortoise.py](./app/db/tortoise.py)
+- [tortoise.py](./app/db/tortoise.py) 新的模型需要在`models_list`中添加,例如`app.models.aps_task`
 
   ```shell script
   # 进入项目根目录
   # 进入项目虚拟环境
-  pipenv shell
+  source .venv/bin/activate
   ```
 
   ```shell
   # 数据库初始化 
-  aerich init -t db.TORTOISE_CONFIG
+  aerich init -t app.db.tortoise.TORTOISE_CONFIG
   aerich init-db
   ```
 
@@ -89,21 +102,21 @@
 
 - 创建(路由,Api,视图)
 
-    - [增删改查](./app/api/admin_api/admin_api.py)
+    - [增删改查](./app/api/v1/routers/admin.py)
 
 - 路由注册
 
-    - [/FastApi_BestPractices/app/api/**init**.py](./app/api/__init__.py)
+    - [app/api/v1/router.py](./app/api/v1/router.py)
 
 ## 六、钩子函数(拦截器):
 
 - 中间件`class MyMiddleware` 注册在app实例中
 
-    - [ApplicationExample.py](./ApplicationExample.py)
+    - [app/main.py](./app/main.py)
 
 ## 七、自定义异常:
 
-- [api_result.py](./common/libs/api_result.py) 在`custom_http_dict`按照例子添加
+- [response.py](./app/core/response.py) 在`custom_http_dict`按照例子添加
 
 ## 八、任务
 
@@ -122,7 +135,7 @@
 
     - celery异步任务:查阅`Flask最佳实践` https://github.com/yangyuexiong/Flask_BestPractices
 
-- 定时任务: [task_handler](./utils/scheduled_tasks/task_handler.py)
+- 定时任务: [scheduler.py](./app/tasks/scheduler.py)
 
     ```python
   
@@ -227,6 +240,5 @@
 
 ## 备注
 
-- 代码中可能存在大量打印调试代码语句`print('xxxx')`可以将其注释或者删除。
-
-- 快试试快速实现你业务需求吧！！！嘻嘻！！！
+- 建议通过 `FAST_API_ENV=development|test|staging|production` 选择环境
+- 配置文件使用 `/.env.*`，可参考 `/.env.example`
