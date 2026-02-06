@@ -99,11 +99,8 @@ class CommonPaginateQuery:
         """构建范围条件"""
 
         if self.filter_range:
-            for k, v in self.filter_range.items():
-                if v == "":
-                    del self.filter_range[k]
-
-            self.filter_conditions.update(self.filter_range)
+            cleaned_filter_range = {k: v for k, v in self.filter_range.items() if v != ""}
+            self.filter_conditions.update(cleaned_filter_range)
 
     async def build_order_by(self):
         """构建排序条件"""
