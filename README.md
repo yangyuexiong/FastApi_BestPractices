@@ -38,7 +38,6 @@
   uv lock
   uv sync
   ```
-- `PyCharm`等配置请查阅(`Flask最佳实践`: https://github.com/yangyuexiong/Flask_BestPractices -> `二、配置虚拟环境`)
 
 ## 三、配置文件
 
